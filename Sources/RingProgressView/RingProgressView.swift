@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2024 Alexey Bukhtin (github.com/buh).
+// Copyright (c) 2025 Alexey Bukhtin (github.com/buh).
 //
 
 import SwiftUI
@@ -15,6 +15,7 @@ public struct RingProgressView<Symbol: View>: View {
     let placeholderColor: Color?
     let headShadowRadius: CGFloat?
     let rotationEffectAngle: Angle
+    let isSymbolRotating: Bool
     let symbol: Symbol
     
     public init(
@@ -25,6 +26,7 @@ public struct RingProgressView<Symbol: View>: View {
         placeholderColor: Color? = .blue.opacity(0.3),
         headShadowRadius: CGFloat? = 5,
         rotationEffectAngle: Angle = Angle(degrees: -90),
+        isSymbolRotating: Bool = true,
         @ViewBuilder symbol: () -> Symbol
     ) {
         _progress = progress
@@ -34,6 +36,7 @@ public struct RingProgressView<Symbol: View>: View {
         self.placeholderColor = placeholderColor
         self.headShadowRadius = headShadowRadius
         self.rotationEffectAngle = rotationEffectAngle
+        self.isSymbolRotating = isSymbolRotating
         self.symbol = symbol()
     }
     
@@ -48,7 +51,7 @@ public struct RingProgressView<Symbol: View>: View {
             let startCGColor: CGColor
             let endCGColor: CGColor
             
-            if #available(iOS 17.0, macOS 14.0, *) {
+            if #available(iOS 17, macOS 14, watchOS 10, *) {
                 startCGColor = startColor.resolve(in: environment).cgColor
                 endCGColor = endColor.resolve(in: environment).cgColor
             } else {
@@ -181,7 +184,7 @@ public struct RingProgressView<Symbol: View>: View {
         let tx = x + circleSize / 2
         let ty = y + circleSize / 2
         context.translateBy(x: tx, y: ty)
-        context.rotate(by: progressAngle - rotationEffectAngle)
+        context.rotate(by: (isSymbolRotating ? progressAngle : .zero) - rotationEffectAngle)
         
         context.draw(
             symbol,
@@ -224,7 +227,7 @@ public extension RingProgressView where Symbol == EmptyView {
     }
     #if os(macOS)
     .frame(height: 500)
-    .frame(maxWidth: 390)
+    .frame(maxWidth: 400)
     #endif
     .colorScheme(.dark)
 }
@@ -240,7 +243,10 @@ struct ProgressRingPreview: View {
                         Image(systemName: "arrow.right")
                             .padding(8)
                     }
+                    #if os(watchOS)
+                    #endif
                     
+                    #if !os(watchOS)
                     RingProgressView(
                         progress: $degrees,
                         startColor: .purple,
@@ -262,7 +268,11 @@ struct ProgressRingPreview: View {
                             .padding(8)
                     }
                     .padding(64)
+                    #endif
                 }
+                #if os(watchOS)
+                .frame(height: 150)
+                #endif
                 
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(Int(degrees * 100))")
@@ -276,7 +286,9 @@ struct ProgressRingPreview: View {
                 }
                 .offset(x: 6)
             }
+            #if !os(watchOS)
             .padding(50)
+            #endif
             
             Slider(value: $degrees, in: 0...2, step: 0.01)
                 .padding()
@@ -286,7 +298,7 @@ struct ProgressRingPreview: View {
 
 extension View {
     func numericTextTransition() -> some View {
-        if #available(iOS 16.0, macOS 13.0, *) {
+        if #available(iOS 16.0, macOS 13.0, watchOS 9, *) {
             return self.contentTransition(.numericText())
         }
         
