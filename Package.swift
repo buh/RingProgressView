@@ -10,6 +10,6 @@ let package = Package(
         .library(name: "RingProgressView", targets: ["RingProgressView"]),
     ],
     targets: [
-        .target(name: "RingProgressView"),
+        .target(name: "RingProgressView", resources: [.process("PrivacyInfo.xcprivacy")]),
     ]
 )
